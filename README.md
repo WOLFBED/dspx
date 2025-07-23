@@ -1,7 +1,7 @@
 # DSPX
 data store pruner and compressor
 
-![dspx_Screenshot_shaved.avif](:/dspx_Screenshot_shaved.avif)
+![dspx_Screenshot_shaved.avif]
 
 &nbsp;
 
