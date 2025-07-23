@@ -55,10 +55,10 @@ class Utilities:
     def printAscii(code, string):
         match code:
             case 7:
-                art = rf"""[blue] ╺┳┓┏━┓┏━┓[/blue]  [deep_sky_blue1]╱[/deep_sky_blue1] 
- [blue] ┃┃┗━┓┣━┛[/blue] [deep_sky_blue1]╱[/deep_sky_blue1] [yellow]dsp ~ data-store pruner ~ version {string}[/yellow]
-[blue] ╺┻┛┗━┛╹[/blue]  [deep_sky_blue1]╱[/deep_sky_blue1]
-[orange1]▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[/orange1]"""
+                art = rf"""[blue] ╺┳┓┏━┓┏━┓╖ ╓[/blue]   [deep_sky_blue1]╱[/deep_sky_blue1] 
+ [blue] ┃┃┗━┓┣━┛ ▓   [/blue][deep_sky_blue1]╱[/deep_sky_blue1] [yellow]data-store pruner compressor ~ version {string}[/yellow]
+[blue] ╺┻┛┗━┛╹  ╜ ╙ [/blue][deep_sky_blue1]╱[/deep_sky_blue1]
+[orange1]▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[/orange1]"""
         rprint(art)
 
     @staticmethod
