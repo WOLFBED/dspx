@@ -16,6 +16,8 @@ data store pruner and compressor
 
 ## TODO List
 
+- [ ] logging() is missing from newly added: FastFileDeleter class, and get_dir_size() method (and related methods) :: *(posted jul 23 2025)*
+- [ ] Need to keep track of before/after sizes to offer comparison at the end
 - [x] fix current methods to not break-out in Traceback errors when any kind of problem arises :: *(posted jul 21 2025)*
 - [ ] Get a life. 
 
