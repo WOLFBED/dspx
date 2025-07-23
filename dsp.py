@@ -152,6 +152,33 @@ class Utilities:
         }
         return commands.get(pm)
 
+    @staticmethod
+    def validate_cli_directory() -> Path:
+        """
+        Validates command line argument for directory path.
+        Returns:
+            Path: Valid directory path as Path object
+        Raises:
+            SystemExit: If argument is missing or invalid
+        """
+        if len(sys.argv) < 2:
+            rprint("[red]Error: Missing directory path argument[/red]")
+            rprint("Usage: script.py <directory_path>")
+            sys.exit(1)
+
+        try:
+            path = Path(sys.argv[1])
+            if not path.exists():
+                rprint(f"[red]Error: Directory does not exist: {path}[/red]")
+                sys.exit(1)
+            if not path.is_dir():
+                rprint(f"[red]Error: Path exists but is not a directory: {path}[/red]")
+                sys.exit(1)
+            return path
+
+        except Exception as e:
+            rprint(f"[red]Error: Invalid directory path - {str(e)}[/red]")
+            sys.exit(1)
 
 
 class FileSystemOperations:
@@ -170,6 +197,8 @@ class FileSystemOperations:
         Raises:
             ValueError: If the path string is empty or contains invalid characters
         """
+        if isinstance(path_string, Path):
+            return path_string
         if not path_string or not path_string.strip():
             raise ValueError("Path string cannot be empty")
         try:
@@ -261,7 +290,8 @@ def main():
     # greeting
     utility.printAscii(7, app_version, )
 
-    input_path = sys.argv[1]
+    # handle input string
+    input_path = utility.validate_cli_directory()
 
     # take dir path input string and convert to path object
     path_obj = file_system.convert_path_string_to_object(input_path)
