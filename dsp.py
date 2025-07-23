@@ -7,6 +7,13 @@ import platform
 import subprocess
 from datetime import datetime
 import logging
+from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn, BarColumn, TaskProgressColumn
+import subprocess
+from typing import Union, Tuple
+import shutil
+import collections
+import itertools
+
 
 
 class Utilities:
@@ -71,6 +78,14 @@ class Utilities:
             return f"{num:.1f}Yi{suffix}"
         siz = sizeof_fmt(item)
         return siz
+
+    @staticmethod
+    def bytes2nice2(size: int) -> str:
+        """Convert size in bytes to human readable format"""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
+            if size < 1024.0:
+                return f"{size:.2f} {unit}"
+            size /= 1024.0
 
     @staticmethod
     def check_program(program_name: str, *, verbose: bool = True) -> bool:
@@ -195,7 +210,6 @@ class FileSystemOperations:
         except OSError as e:
             raise ValueError(f"Invalid path string: {str(e)}")
 
-
     @staticmethod
     def ensure_valid_dir_path(path) -> bool:
         """
@@ -221,43 +235,367 @@ class FileSystemOperations:
             return False
 
     @staticmethod
-    def get_dir_size(dir_path: Path) -> int:
+    def get_dir_size(dir_path: Path, use_du: bool = False) -> Union[int, Tuple[int, str]]:
         """
-        Calculate total size of a directory recursively, excluding symlinks.
-        Uses os.scandir for maximum performance.
+        Calculate total size of a directory using either Python or du command.
+        For very large directories (>1TB), du is automatically used.
         Args:
             dir_path: Path object pointing to the directory
+            use_du: Force using du command instead of Python implementation
         Returns:
-            Total size in bytes
-        Raises:
-            ValueError: If the path is not a valid directory
+            If using Python impl: total size in bytes
+            If using du: tuple of (size in bytes, human readable size)
         """
         if not isinstance(dir_path, Path):
             raise ValueError(f"Expected Path object, got {type(dir_path).__name__}")
         if not dir_path.is_dir():
             raise ValueError(f"Path {dir_path} is not a directory")
-        total_size = 0
+        # Check if du is available
+        if use_du or FileSystemOperations._should_use_du(dir_path):
+            return FileSystemOperations._get_size_using_du(dir_path)
+        return FileSystemOperations._get_size_using_python(dir_path)
+
+    @staticmethod
+    def _should_use_du(dir_path: Path) -> bool:
+        """Determine if we should use du based on quick directory analysis"""
         try:
-            # Using os.scandir which is significantly faster than os.walk or Path.rglob
-            with os.scandir(dir_path) as entries:
-                for entry in entries:
+            # Get filesystem info
+            stats = os.statvfs(dir_path)
+            total_size = stats.f_blocks * stats.f_frsize
+            # If filesystem is larger than 1TB, suggest using du
+            return total_size > 1_099_511_627_776  # 1TB in bytes
+        except Exception:
+            return False
+
+    @staticmethod
+    def _get_size_using_du(dir_path: Path) -> Tuple[int, str]:
+        """Use du command to get directory size"""
+        try:
+            # -b for bytes, -s for summary only
+            result = subprocess.run(
+                ['du', '-sb', str(dir_path)],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            # du output format: "size_in_bytes path"
+            size_in_bytes = int(result.stdout.split()[0])
+            # Get human readable size with du -sh
+            human_result = subprocess.run(
+                ['du', '-sh', str(dir_path)],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return size_in_bytes, Utilities.bytes2nice(size_in_bytes)
+        except subprocess.SubprocessError as e:
+            raise ValueError(f"Error running du command: {e}")
+
+    @staticmethod
+    def _get_size_using_python(dir_path: Path) -> int:
+        """Calculate directory size using Python with progress reporting"""
+        total_size = 0
+        dirs_to_scan = collections.deque([dir_path])
+        processed_files = 0
+        # First, count total files for progress bar
+        total_files = sum(len(files) for _, _, files in os.walk(dir_path))
+        with Progress(
+                SpinnerColumn(),
+                "[progress.description]{task.description}",
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+        ) as progress:
+            task = progress.add_task("[cyan]Calculating size...", total=total_files)
+            try:
+                while dirs_to_scan:
+                    current_dir = dirs_to_scan.popleft()
                     try:
-                        # Skip symlinks to avoid infinite loops
-                        if entry.is_symlink():
-                            continue
-                        # For files, add size
-                        if entry.is_file(follow_symlinks=False):
-                            total_size += entry.stat(follow_symlinks=False).st_size
-                        # For directories, recurse
-                        elif entry.is_dir(follow_symlinks=False):
-                            total_size += FileSystemOperations.get_dir_size(Path(entry.path))
+                        with os.scandir(current_dir) as it:
+                            while True:
+                                chunk = list(itertools.islice(it, 1000))
+                                if not chunk:
+                                    break
+                                for entry in chunk:
+                                    try:
+                                        if entry.is_symlink():
+                                            continue
+                                        if entry.is_file(follow_symlinks=False):
+                                            size = entry.stat(follow_symlinks=False).st_size
+                                            total_size += size
+                                            processed_files += 1
+                                            progress.update(task, advance=1)
+                                        elif entry.is_dir(follow_symlinks=False):
+                                            dirs_to_scan.append(Path(entry.path))
+                                    except (PermissionError, OSError) as e:
+                                        print(f"Warning: Could not access {entry.path}: {e}",
+                                              file=sys.stderr)
+                                        progress.update(task, advance=1)
+                                        continue
                     except (PermissionError, OSError) as e:
-                        print(f"Warning: Could not access {entry.path}: {e}", file=sys.stderr)
+                        print(f"Warning: Could not scan directory {current_dir}: {e}",
+                              file=sys.stderr)
                         continue
-        except (PermissionError, OSError) as e:
-            raise ValueError(f"Could not scan directory {dir_path}: {e}")
+            except Exception as e:
+                raise ValueError(f"Error scanning directory structure: {e}")
         return total_size
 
+    @staticmethod
+    def delete_files_by_patterns(directory, patterns):
+        """
+        1. only accepts path objects 
+        2. doesn't move-on until all files are actually deleted, this is critical
+        3. must be extremely fast, as will be dealing with hundreds of millions of files spanning over 500TB
+        """
+        if not isinstance(directory, Path):
+            raise ValueError("Input directory must be a Path object")
+
+        deleted_files = []
+
+        with Progress() as progress:
+            # Create progress bar
+            task = progress.add_task("[cyan]Deleting files...", total=None)
+
+            try:
+                for pattern in patterns:
+                    # Use rglob for recursive matching
+                    matching_files = list(directory.rglob(pattern))
+
+                    for file_path in matching_files:
+                        try:
+                            if file_path.is_file():
+                                file_path.unlink()
+                                deleted_files.append(file_path)
+                                progress.update(task, advance=1)
+
+                            # Verify file is actually deleted
+                            if file_path.exists():
+                                raise IOError(f"Failed to delete {file_path}")
+
+                        except (PermissionError, OSError) as e:
+                            logging.error(f"Error deleting {file_path}: {e}")
+                            continue
+
+            except Exception as e:
+                logging.error(f"Error during file deletion: {e}")
+                raise
+
+        return deleted_files
+
+
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
+import logging
+from pathlib import Path
+from rich.progress import Progress
+import asyncio
+import mmap
+from typing import List, Iterator, Set
+
+
+# class FastFileDeleter:
+#     def __init__(self, directory: Path, batch_size: int = 1000):
+#         self.directory = directory
+#         self.batch_size = batch_size
+#         self._seen_files: Set[Path] = set()
+#
+#     async def delete_files_by_patterns(self, patterns: List[str]) -> List[Path]:
+#         if not isinstance(self.directory, Path):
+#             raise ValueError("Input directory must be a Path object")
+#
+#         deleted_files = []
+#
+#         with Progress() as progress:
+#             task = progress.add_task("[cyan]Deleting files...", total=None)
+#
+#             try:
+#                 # Process patterns concurrently
+#                 async with ProcessPoolExecutor() as pool:
+#                     deletion_tasks = []
+#
+#                     for pattern in patterns:
+#                         for batch in self._get_file_batches(pattern):
+#                             deletion_tasks.append(
+#                                 self._delete_batch(pool, batch)
+#                             )
+#
+#                     # Wait for all deletions to complete
+#                     results = await asyncio.gather(*deletion_tasks)
+#                     for batch_deleted in results:
+#                         deleted_files.extend(batch_deleted)
+#                         progress.update(task, advance=len(batch_deleted))
+#
+#             except Exception as e:
+#                 logging.error(f"Error during file deletion: {e}")
+#                 raise
+#
+#         return deleted_files
+#
+#     def _get_file_batches(self, pattern: str) -> Iterator[List[Path]]:
+#         """Get files in batches using efficient directory scanning"""
+#         batch = []
+#
+#         for entry in os.scandir(self.directory):
+#             if len(batch) >= self.batch_size:
+#                 yield batch
+#                 batch = []
+#
+#             try:
+#                 file_path = Path(entry.path)
+#                 if file_path in self._seen_files:
+#                     continue
+#
+#                 if entry.is_file() and file_path.match(pattern):
+#                     batch.append(file_path)
+#                     self._seen_files.add(file_path)
+#
+#             except (PermissionError, OSError) as e:
+#                 logging.error(f"Error accessing {entry.path}: {e}")
+#
+#         if batch:
+#             yield batch
+#
+#     async def _delete_batch(self, pool, file_batch: List[Path]) -> List[Path]:
+#         """Delete a batch of files using process pool"""
+#         deleted = []
+#
+#         loop = asyncio.get_event_loop()
+#         futures = []
+#
+#         for file_path in file_batch:
+#             futures.append(
+#                 loop.run_in_executor(
+#                     pool, self._delete_single_file, file_path
+#                 )
+#             )
+#
+#         results = await asyncio.gather(*futures)
+#         deleted.extend([f for f in results if f is not None])
+#
+#         return deleted
+#
+#     @staticmethod
+#     def _delete_single_file(file_path: Path) -> Path:
+#         """Delete a single file with verification"""
+#         try:
+#             file_path.unlink()
+#             if not file_path.exists():
+#                 return file_path
+#         except (PermissionError, OSError) as e:
+#             logging.error(f"Error deleting {file_path}: {e}")
+#         return None
+
+
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
+import logging
+from pathlib import Path
+from rich.progress import Progress
+from typing import List, Iterator, Set
+
+
+class FastFileDeleter:
+    def __init__(self, directory: Path, batch_size: int = 1000):
+        self.directory = directory
+        self.batch_size = batch_size
+        self._seen_files: Set[Path] = set()
+
+    def delete_files_by_patterns(self, patterns: List[str]) -> List[Path]:
+        if not isinstance(self.directory, Path):
+            raise ValueError("Input directory must be a Path object")
+
+        deleted_files = []
+
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Deleting files...", total=None)
+
+            try:
+                with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+                    futures = []
+
+                    # Submit deletion tasks in batches
+                    for pattern in patterns:
+                        for batch in self._get_file_batches(pattern):
+                            futures.append(
+                                executor.submit(self._delete_batch, batch)
+                            )
+
+                    # Process results as they complete
+                    for future in as_completed(futures):
+                        batch_deleted = future.result()
+                        deleted_files.extend(batch_deleted)
+                        progress.update(task, advance=len(batch_deleted))
+
+            except Exception as e:
+                logging.error(f"Error during file deletion: {e}")
+                raise
+
+        return deleted_files
+
+    def _get_file_batches(self, pattern: str) -> Iterator[List[Path]]:
+        """Get files in batches using efficient directory scanning"""
+        batch = []
+
+        for entry in os.scandir(self.directory):
+            if len(batch) >= self.batch_size:
+                yield batch
+                batch = []
+
+            try:
+                file_path = Path(entry.path)
+                if file_path in self._seen_files:
+                    continue
+
+                if entry.is_file() and file_path.match(pattern):
+                    batch.append(file_path)
+                    self._seen_files.add(file_path)
+
+            except (PermissionError, OSError) as e:
+                logging.error(f"Error accessing {entry.path}: {e}")
+
+        if batch:
+            yield batch
+
+    @staticmethod
+    def _delete_batch(file_batch: List[Path]) -> List[Path]:
+        """Delete a batch of files"""
+        deleted = []
+
+        for file_path in file_batch:
+            try:
+                file_path.unlink()
+                if not file_path.exists():
+                    deleted.append(file_path)
+            except (PermissionError, OSError) as e:
+                logging.error(f"Error deleting {file_path}: {e}")
+
+        return deleted
+
+
+
+
+
+async def ffd(directory):
+    residuals_patterns = [
+        ".Xauthority-*", "snap.*", "*.log", "*.swp", "*.swo", "*~", ".#*",
+        ".kate-swp", "*.o", "*.out", "*.a", "*.class", "*.pyc", "*.pyo",
+        "_*pycache*_*/*", "recently-used.xbel", ".goutputstream-*",
+        "thumbcache_*.db", "Thumbs.db", "*.dmp", "*.mdmp", "*.hdmp", "*.msi",
+        "*.mst", "*.cab", "*.old", "*.bak", "desktop.ini", "ehthumbs.db",
+        ".DS_Store", ".Trash-*", "*.tmp", "*.autosave", "*.~*", "*.part",
+        ".git/*", ".svn/*", ".hg/*"
+    ]
+    # patterns = ["*.tmp", "*.log", "*.bak"]
+
+    deleter = FastFileDeleter(directory)
+    deleted_files = await deleter.delete_files_by_patterns(residuals_patterns)
+    print(f"Deleted {len(deleted_files)} files")
+
+
+def delete_files_by_patterns(directory: Path, patterns: List[str]) -> List[Path]:
+    """Main function to delete files matching patterns"""
+    deleter = FastFileDeleter(directory)
+    return deleter.delete_files_by_patterns(patterns)
 
 
 def main():
@@ -282,6 +620,9 @@ def main():
     # handle input string
     input_path = utility.validate_cli_directory()
 
+    # ensure fdupes is installed, if not suggest how to install, display result
+    utility.check_program("fdupes")
+
     # take dir path input string and convert to path object
     path_obj = file_system.convert_path_string_to_object(input_path)
 
@@ -294,13 +635,25 @@ def main():
 
     # display input dir size
     dir_name = path_obj.name
-    rprint(f"Directory '{dir_name}' size: {utility.bytes2nice(file_system.get_dir_size(path_obj))} bytes")
+    # rprint(f"Directory '{dir_name}' size: {utility.bytes2nice(file_system.get_dir_size(path_obj))} bytes")
 
-    # ensure fdupes is installed, if not suggest how to install, display result
-    utility.check_program("fdupes")
+    try:
+        # path = Path("/path/to/large/directory")
+        result = FileSystemOperations.get_dir_size(path_obj)
+
+        if isinstance(result, tuple):
+            # du was used
+            size_bytes, human_size = result
+            print(f"Directory size (du): {human_size} ({size_bytes:,} bytes)")
+        else:
+            # Python implementation was used
+            print(f"Directory size: {utility.bytes2nice(result)} ({result:,} bytes)")
+    except ValueError as e:
+        print(f"Error: {e}")
 
     # delete OS residual files
-
+    # asyncio.run(ffd(path_obj))
+    deleted_files = delete_files_by_patterns(path_obj, residuals_patterns)
 
     # deduplicate files
 
@@ -310,3 +663,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
