@@ -17,7 +17,6 @@ class Utilities:
         if Utilities._timestamp is None:
             Utilities._timestamp = self.ts_custom("%d%m%Y%H%M%S%f")
 
-
     @staticmethod
     def ts_custom(format):
         """
@@ -39,7 +38,6 @@ class Utilities:
             if Utilities._timestamp is None:
                 raise RuntimeError("Utilities must be instantiated before using logging")
             log_file = f"dsp_{Utilities._timestamp}.log"
-
         logger = logging.getLogger()
         logger.setLevel(log_level)
         logger.handlers.clear()  # Clear existing handlers
@@ -53,7 +51,6 @@ class Utilities:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-
     @staticmethod
     def printAscii(code, string):
         match code:
@@ -63,7 +60,6 @@ class Utilities:
 [blue] ╺┻┛┗━┛╹[/blue]  [deep_sky_blue1]╱[/deep_sky_blue1]
 [orange1]▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[/orange1]"""
         rprint(art)
-
 
     @staticmethod
     def bytes2nice(item):
@@ -75,7 +71,6 @@ class Utilities:
             return f"{num:.1f}Yi{suffix}"
         siz = sizeof_fmt(item)
         return siz
-
 
     @staticmethod
     def check_program(program_name: str, *, verbose: bool = True) -> bool:
@@ -107,7 +102,6 @@ class Utilities:
                 rprint("🚫 No supported package manager detected.")
         return False
 
-
     @staticmethod
     def _detect_os_info():
         try:
@@ -118,7 +112,6 @@ class Utilities:
                 )
         except Exception:
             return {}
-
 
     @staticmethod
     def _detect_package_manager():
@@ -136,7 +129,6 @@ class Utilities:
             if shutil.which(pm):
                 return pm
         return None
-
 
     @staticmethod
     def _suggest_install_command(pm, program):
@@ -165,7 +157,6 @@ class Utilities:
             rprint("[red]Error: Missing directory path argument[/red]")
             rprint("Usage: script.py <directory_path>")
             sys.exit(1)
-
         try:
             path = Path(sys.argv[1])
             if not path.exists():
@@ -175,7 +166,6 @@ class Utilities:
                 rprint(f"[red]Error: Path exists but is not a directory: {path}[/red]")
                 sys.exit(1)
             return path
-
         except Exception as e:
             rprint(f"[red]Error: Invalid directory path - {str(e)}[/red]")
             sys.exit(1)
@@ -185,7 +175,6 @@ class FileSystemOperations:
     """
     A class that provides utility methods for filesystem operations using Path objects.
     """
-
     @staticmethod
     def convert_path_string_to_object(path_string: str) -> Path:
         """
