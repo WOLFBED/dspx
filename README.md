@@ -15,7 +15,7 @@ data store pruner and compressor
 
 ## TODO List
 
-- [x] fix current methods to not break-out in Traceback errors :: *(posted jul 21 2025)*
+- [x] fix current methods to not break-out in Traceback errors when any kind of problem arises :: *(posted jul 21 2025)*
 - [ ] Get a life. 
 
 &nbsp;
