@@ -86,11 +86,7 @@ DEFAULT_SETTINGS = {
     'chunk_size': 65536,  # 64 KB
 }
 
-# # Settings file path
-# SETTINGS_FILE = Path('dspx_settings.json')
-# PATTERNS_FILE = Path('dspx_residuals_patterns.csv')
 
-from pathlib import Path
 
 # Determine the directory containing the current script
 BASE_DIR = Path(__file__).resolve().parent
