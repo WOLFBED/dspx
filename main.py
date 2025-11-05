@@ -4,7 +4,7 @@ DSPX - Data Store Pruner and Compressor
 Clean up directories by removing OS residual files, finding and removing duplicate files,
 and deleting empty directories.
 
-P.W.R. Marcoux 2025
+P.W.R. Marcoux 2025 :: aka WOLFBED
 
 VERSION 1.0
     - CSV-based pattern matching for OS residual files
@@ -86,8 +86,6 @@ DEFAULT_SETTINGS = {
     'chunk_size': 65536,  # 64 KB
 }
 
-
-
 # Determine the directory containing the current script
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -117,6 +115,28 @@ def save_settings(settings: Dict):
         print(f"Failed to save settings: {e}")
 
 
+# def load_residual_patterns() -> List[Dict]:
+#     """Load OS residual patterns from CSV file."""
+#     patterns = []
+#     if not PATTERNS_FILE.exists():
+#         return []
+#     try:
+#         with open(PATTERNS_FILE, 'r', encoding='utf-8') as f:
+#             reader = csv.DictReader(f)
+#             for row in reader:
+#                 # Validate required columns
+#                 if row.get('OS') and row.get('File_Pattern'):
+#                     patterns.append({
+#                         'OS': row.get('OS', '').strip(),
+#                         'File_Pattern': row.get('File_Pattern', '').strip(),
+#                         'Path_Example': row.get('Path_Example', '').strip(),
+#                         'Description': row.get('Description', '').strip(),
+#                         'Safe_To_Delete': row.get('Safe_To_Delete', '').strip()
+#                     })
+#     except Exception as e:
+#         print(f"Error loading patterns: {e}")
+#     return patterns
+
 def load_residual_patterns() -> List[Dict]:
     """Load OS residual patterns from CSV file."""
     patterns = []
@@ -133,12 +153,29 @@ def load_residual_patterns() -> List[Dict]:
                         'File_Pattern': row.get('File_Pattern', '').strip(),
                         'Path_Example': row.get('Path_Example', '').strip(),
                         'Description': row.get('Description', '').strip(),
-                        'Safe_To_Delete': row.get('Safe_To_Delete', '').strip()
+                        'Safe_To_Delete': row.get('Safe_To_Delete', '').strip(),
+                        'Enabled': row.get('Enabled', 'Yes').strip()  # Default to Yes if not present
                     })
     except Exception as e:
         print(f"Error loading patterns: {e}")
     return patterns
 
+
+# def save_residual_patterns(patterns: List[Dict]):
+#     """Save OS residual patterns to CSV file."""
+#     try:
+#         # Create backup
+#         if PATTERNS_FILE.exists():
+#             backup_file = PATTERNS_FILE.with_suffix('.csv_bak')
+#             shutil.copy2(PATTERNS_FILE, backup_file)
+#
+#         with open(PATTERNS_FILE, 'w', encoding='utf-8', newline='') as f:
+#             fieldnames = ['OS', 'File_Pattern', 'Path_Example', 'Description', 'Safe_To_Delete']
+#             writer = csv.DictWriter(f, fieldnames=fieldnames)
+#             writer.writeheader()
+#             writer.writerows(patterns)
+#     except Exception as e:
+#         print(f"Error saving patterns: {e}")
 
 def save_residual_patterns(patterns: List[Dict]):
     """Save OS residual patterns to CSV file."""
@@ -149,7 +186,7 @@ def save_residual_patterns(patterns: List[Dict]):
             shutil.copy2(PATTERNS_FILE, backup_file)
 
         with open(PATTERNS_FILE, 'w', encoding='utf-8', newline='') as f:
-            fieldnames = ['OS', 'File_Pattern', 'Path_Example', 'Description', 'Safe_To_Delete']
+            fieldnames = ['OS', 'File_Pattern', 'Path_Example', 'Description', 'Safe_To_Delete', 'Enabled']
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(patterns)
@@ -157,10 +194,23 @@ def save_residual_patterns(patterns: List[Dict]):
         print(f"Error saving patterns: {e}")
 
 
+# def match_residual_pattern(filepath: Path, patterns: List[Dict]) -> Optional[Dict]:
+#     """Check if a file matches any OS residual pattern."""
+#     filename = filepath.name
+#     for pattern in patterns:
+#         file_pattern = pattern['File_Pattern']
+#         # Handle wildcard patterns
+#         if fnmatch(filename, file_pattern):
+#             return pattern
+#     return None
+
 def match_residual_pattern(filepath: Path, patterns: List[Dict]) -> Optional[Dict]:
     """Check if a file matches any OS residual pattern."""
     filename = filepath.name
     for pattern in patterns:
+        # Skip disabled patterns
+        if pattern.get('Enabled', 'Yes').lower() not in ['yes', 'true', '1']:
+            continue
         file_pattern = pattern['File_Pattern']
         # Handle wildcard patterns
         if fnmatch(filename, file_pattern):
@@ -731,6 +781,58 @@ class MainWindow(QMainWindow):
         return widget
 
 
+    # def create_patterns_tab(self) -> QWidget:
+    #     """Create the patterns editor tab."""
+    #     widget = QWidget()
+    #     layout = QVBoxLayout()
+    #
+    #     info_label = QLabel(
+    #         "<b>OS Residual File Patterns</b><br>"
+    #         "Edit patterns used to identify OS residual files. "
+    #         "Only OS and File_Pattern columns are required."
+    #     )
+    #     info_label.setWordWrap(True)
+    #     layout.addWidget(info_label)
+    #
+    #     # Table for patterns
+    #     self.patterns_table = QTableWidget()
+    #     self.patterns_table.setColumnCount(5)
+    #     self.patterns_table.setHorizontalHeaderLabels([
+    #         "OS", "File_Pattern", "Path_Example", "Description", "Safe_To_Delete"
+    #     ])
+    #     self.patterns_table.horizontalHeader().setStretchLastSection(True)
+    #     self.patterns_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+    #
+    #     # Load patterns into table
+    #     self.load_patterns_table()
+    #
+    #     # Buttons
+    #     btn_layout = QHBoxLayout()
+    #
+    #     add_row_btn = QPushButton("Add Row")
+    #     add_row_btn.clicked.connect(self.add_pattern_row)
+    #
+    #     delete_row_btn = QPushButton("Delete Selected Rows")
+    #     delete_row_btn.clicked.connect(self.delete_pattern_rows)
+    #
+    #     save_patterns_btn = QPushButton("Save Patterns")
+    #     save_patterns_btn.clicked.connect(self.save_patterns_from_table)
+    #
+    #     reload_patterns_btn = QPushButton("Reload from File")
+    #     reload_patterns_btn.clicked.connect(self.reload_patterns)
+    #
+    #     btn_layout.addWidget(add_row_btn)
+    #     btn_layout.addWidget(delete_row_btn)
+    #     btn_layout.addWidget(save_patterns_btn)
+    #     btn_layout.addWidget(reload_patterns_btn)
+    #     btn_layout.addStretch()
+    #
+    #     layout.addWidget(self.patterns_table)
+    #     layout.addLayout(btn_layout)
+    #
+    #     widget.setLayout(layout)
+    #     return widget
+
     def create_patterns_tab(self) -> QWidget:
         """Create the patterns editor tab."""
         widget = QWidget()
@@ -739,16 +841,16 @@ class MainWindow(QMainWindow):
         info_label = QLabel(
             "<b>OS Residual File Patterns</b><br>"
             "Edit patterns used to identify OS residual files. "
-            "Only OS and File_Pattern columns are required."
+            "Only OS and File_Pattern columns are required. Uncheck 'Enabled' to disable a pattern."
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
 
         # Table for patterns
         self.patterns_table = QTableWidget()
-        self.patterns_table.setColumnCount(5)
+        self.patterns_table.setColumnCount(6)
         self.patterns_table.setHorizontalHeaderLabels([
-            "OS", "File_Pattern", "Path_Example", "Description", "Safe_To_Delete"
+            "Enabled", "OS", "File_Pattern", "Path_Example", "Description", "Safe_To_Delete"
         ])
         self.patterns_table.horizontalHeader().setStretchLastSection(True)
         self.patterns_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -784,25 +886,63 @@ class MainWindow(QMainWindow):
         return widget
 
 
+    # def load_patterns_table(self):
+    #     """Load patterns into the table widget."""
+    #     self.patterns_table.setRowCount(len(self.patterns))
+    #     for row, pattern in enumerate(self.patterns):
+    #         self.patterns_table.setItem(row, 0, QTableWidgetItem(pattern.get('OS', '')))
+    #         self.patterns_table.setItem(row, 1, QTableWidgetItem(pattern.get('File_Pattern', '')))
+    #         self.patterns_table.setItem(row, 2, QTableWidgetItem(pattern.get('Path_Example', '')))
+    #         self.patterns_table.setItem(row, 3, QTableWidgetItem(pattern.get('Description', '')))
+    #         self.patterns_table.setItem(row, 4, QTableWidgetItem(pattern.get('Safe_To_Delete', '')))
+
+
     def load_patterns_table(self):
         """Load patterns into the table widget."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QCheckBox
+
         self.patterns_table.setRowCount(len(self.patterns))
         for row, pattern in enumerate(self.patterns):
-            self.patterns_table.setItem(row, 0, QTableWidgetItem(pattern.get('OS', '')))
-            self.patterns_table.setItem(row, 1, QTableWidgetItem(pattern.get('File_Pattern', '')))
-            self.patterns_table.setItem(row, 2, QTableWidgetItem(pattern.get('Path_Example', '')))
-            self.patterns_table.setItem(row, 3, QTableWidgetItem(pattern.get('Description', '')))
-            self.patterns_table.setItem(row, 4, QTableWidgetItem(pattern.get('Safe_To_Delete', '')))
+            # Enabled checkbox
+            enabled_val = pattern.get('Enabled', 'Yes').strip().lower()
+            checkbox = QCheckBox()
+            checkbox.setChecked(enabled_val in ['yes', 'true', '1'])
+            checkbox.setStyleSheet("margin-left:50%; margin-right:50%;")
+            self.patterns_table.setCellWidget(row, 0, checkbox)
+
+            self.patterns_table.setItem(row, 1, QTableWidgetItem(pattern.get('OS', '')))
+            self.patterns_table.setItem(row, 2, QTableWidgetItem(pattern.get('File_Pattern', '')))
+            self.patterns_table.setItem(row, 3, QTableWidgetItem(pattern.get('Path_Example', '')))
+            self.patterns_table.setItem(row, 4, QTableWidgetItem(pattern.get('Description', '')))
+            self.patterns_table.setItem(row, 5, QTableWidgetItem(pattern.get('Safe_To_Delete', '')))
+
+    # def add_pattern_row(self):
+    #     """Add a new empty row to the patterns table."""
+    #     row = self.patterns_table.rowCount()
+    #     self.patterns_table.insertRow(row)
+    #     for col in range(5):
+    #         self.patterns_table.setItem(row, col, QTableWidgetItem(""))
+    #     self.log("Added new pattern row")
 
 
     def add_pattern_row(self):
         """Add a new empty row to the patterns table."""
+        from PySide6.QtWidgets import QCheckBox
+
         row = self.patterns_table.rowCount()
         self.patterns_table.insertRow(row)
-        for col in range(5):
+
+        # Add enabled checkbox (default checked)
+        checkbox = QCheckBox()
+        checkbox.setChecked(True)
+        checkbox.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.patterns_table.setCellWidget(row, 0, checkbox)
+
+        # Add empty items for other columns
+        for col in range(1, 6):
             self.patterns_table.setItem(row, col, QTableWidgetItem(""))
         self.log("Added new pattern row")
-
 
     def delete_pattern_rows(self):
         """Delete selected rows from the patterns table."""
@@ -812,37 +952,81 @@ class MainWindow(QMainWindow):
         self.log(f"Deleted {len(selected_rows)} pattern row(s)")
 
 
+    # def save_patterns_from_table(self):
+    #     """Save patterns from table to file."""
+    #     patterns = []
+    #     invalid_rows = []
+    #     for row in range(self.patterns_table.rowCount()):
+    #         os_val = self.patterns_table.item(row, 0)
+    #         pattern_val = self.patterns_table.item(row, 1)
+    #         os_text = os_val.text().strip() if os_val else ""
+    #         pattern_text = pattern_val.text().strip() if pattern_val else ""
+    #         # Validate required fields
+    #         if not os_text or not pattern_text:
+    #             invalid_rows.append(row + 1)
+    #             continue
+    #         pattern = {
+    #             'OS': os_text,
+    #             'File_Pattern': pattern_text,
+    #             'Path_Example': self.patterns_table.item(row, 2).text() if self.patterns_table.item(row, 2) else "",
+    #             'Description': self.patterns_table.item(row, 3).text() if self.patterns_table.item(row, 3) else "",
+    #             'Safe_To_Delete': self.patterns_table.item(row, 4).text() if self.patterns_table.item(row, 4) else ""
+    #         }
+    #         patterns.append(pattern)
+    #     if invalid_rows:
+    #         QMessageBox.warning(
+    #             self, "Invalid Patterns",
+    #             f"Rows {', '.join(map(str, invalid_rows))} are missing required fields (OS and File_Pattern). "
+    #             "These rows will not be saved."
+    #         )
+    #     save_residual_patterns(patterns)
+    #     self.patterns = patterns
+    #     self.log(f"Saved {len(patterns)} patterns to {PATTERNS_FILE}")
+    #     QMessageBox.information(self, "Patterns Saved", f"Successfully saved {len(patterns)} patterns.")
+
     def save_patterns_from_table(self):
         """Save patterns from table to file."""
         patterns = []
         invalid_rows = []
         for row in range(self.patterns_table.rowCount()):
-            os_val = self.patterns_table.item(row, 0)
-            pattern_val = self.patterns_table.item(row, 1)
+            # Get enabled checkbox
+            checkbox = self.patterns_table.cellWidget(row, 0)
+            enabled = "Yes" if checkbox and checkbox.isChecked() else "No"
+
+            os_val = self.patterns_table.item(row, 1)
+            pattern_val = self.patterns_table.item(row, 2)
             os_text = os_val.text().strip() if os_val else ""
             pattern_text = pattern_val.text().strip() if pattern_val else ""
+
             # Validate required fields
             if not os_text or not pattern_text:
                 invalid_rows.append(row + 1)
                 continue
+
             pattern = {
                 'OS': os_text,
                 'File_Pattern': pattern_text,
-                'Path_Example': self.patterns_table.item(row, 2).text() if self.patterns_table.item(row, 2) else "",
-                'Description': self.patterns_table.item(row, 3).text() if self.patterns_table.item(row, 3) else "",
-                'Safe_To_Delete': self.patterns_table.item(row, 4).text() if self.patterns_table.item(row, 4) else ""
+                'Path_Example': self.patterns_table.item(row, 3).text() if self.patterns_table.item(row, 3) else "",
+                'Description': self.patterns_table.item(row, 4).text() if self.patterns_table.item(row, 4) else "",
+                'Safe_To_Delete': self.patterns_table.item(row, 5).text() if self.patterns_table.item(row, 5) else "",
+                'Enabled': enabled
             }
             patterns.append(pattern)
+
         if invalid_rows:
             QMessageBox.warning(
                 self, "Invalid Patterns",
                 f"Rows {', '.join(map(str, invalid_rows))} are missing required fields (OS and File_Pattern). "
                 "These rows will not be saved."
             )
+
         save_residual_patterns(patterns)
         self.patterns = patterns
-        self.log(f"Saved {len(patterns)} patterns to {PATTERNS_FILE}")
-        QMessageBox.information(self, "Patterns Saved", f"Successfully saved {len(patterns)} patterns.")
+
+        # Count enabled patterns
+        enabled_count = sum(1 for p in patterns if p.get('Enabled', 'Yes').lower() in ['yes', 'true', '1'])
+        self.log(f"Saved {len(patterns)} patterns ({enabled_count} enabled) to {PATTERNS_FILE}")
+        QMessageBox.information(self, "Patterns Saved", f"Successfully saved {len(patterns)} patterns ({enabled_count} enabled).")
 
 
     def reload_patterns(self):

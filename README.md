@@ -56,6 +56,7 @@ git pull
 
 ## TODO List
 
+- [ ] decouple the UI from the processes, to ensure the GUI doesn't freeze
 - [ ] look for ways to speed it up, it's still super slow.
 - [ ] merge tabs 2 and 3 since there's no longer the need to have them separated. (it used to make sense, but this is no longer the case.)
 - [ ] make it so patterns can be enabled or disabled.
