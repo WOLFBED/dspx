@@ -22,32 +22,35 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 ### Install
 
-1. go in parent directory where you want to install to
-2. [![Copy Command](https://img.shields.io/badge/copy-command-green?logo=github)](https://github.com/WOLFBED/dspx)
-
-3. do ```git clone https://github.com/WOLFBED/dspx``` [![Copy Command](https://img.shields.io/badge/copy-command-green?logo=github)](https://github.com/WOLFBED/dspx)
-
-this will create new dir and install dspx within
-3. cd into dspx/
-4. do 'chmod +x install.sh && chmod +x uninstall.sh && chmod +x install-ubuntu.sh && chmod +x install-arch.sh'
-5. do './install.sh'
-6. follow the prompts
-7. you should now have a desktop icon and a launcher script named dspx-launcher.sh
-8. run the launcher script
-9. you will also be able to find it in your applications menu
+1. in your terminal, go in parent directory where you want to install dspx
+2. paste the below snippet, press enter, and follow the prompts -> it will create new dir and install dspx within:
+```bash
+git clone https://github.com/WOLFBED/dspx && \
+cd dspx/ && \
+chmod +x install.sh && chmod +x uninstall.sh && chmod +x install-ubuntu.sh && chmod +x install-arch.sh && \
+./install.sh
+```
+3. you should now have a desktop icon and a launcher script named dspx-launcher.sh
+5. you will also be able to find it in your applications menu, or you can run the launcher script directly
 
 ### Update to latest version
 
 1. go in dspx/ directory
-2. do 'git pull'
-3. should be good
+2. do:
+```bash
+git pull
+```
+3. should update to current version
 
 ### Uninstall
 
 1. go into dspx/ install directory
-1. do './uninstall.sh'
-2. follow the prompts
-3. u gud bra
+2. do:
+```bash
+./uninstall.sh
+```
+3. follow the prompts
+4. u gud bra
 
 &nbsp;
 
