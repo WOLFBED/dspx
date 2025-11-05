@@ -49,6 +49,7 @@ PySide6 Data Store Pruner & Compressor Linux Application
 ## TODO List
 
 - [ ] make it so patterns can be enabled or disabled.
+- [ ] add spinner when process is running, otherwise confusing.
 - [ ] Get a life. 
 
 &nbsp;
