@@ -70,8 +70,8 @@ git pull
   - image files to avif or jxl
   - video files to av1/opus
 - analyze task throughput and approximate a completion time, i.e. "should be done in x time"
-- ---OPTIONAL--- compares files that are extremely similar but not identical, and displays them -- at which point you're given the choice to delete them, one at a time.
-- use argparse instead of diarrhea
+- ---OPTIONAL--- compares files that are extremely similar but not identical, and displays them -- at which point you're given the choice to delete them, one at a time.  This would be especially useful for images.
+- ~~use argparse instead of diarrhea~~
 
 &nbsp;
 
