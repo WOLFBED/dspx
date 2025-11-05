@@ -12,13 +12,13 @@ PySide6 Data Store Pruner & Compressor Linux Application
 4. deletes any empty subdirs in given dir(s), and gives the choice to delete them individually or all at once.
 5. write all operations to a log file where the program is run
 6. uses AsyncIO and Blake3 for parallelized multithreaded hashing and pattern matching so it runs faster
-7. pattern-matching is configurable, like a csv file, and these can be saved
+7. pattern-matching is configurable, like a spreadsheet, and these can be saved
 8. CPU threads and RAM usage are configurable, and these settings can be saved
 9. has installer which creates a virtual environment and installs all dependencies, and a launcher script with desktop icon
 
 &nbsp;
 
-## How It Work ~ Install/Uninstall
+## How to Install / Update / Uninstall
 
 ### Install
 
