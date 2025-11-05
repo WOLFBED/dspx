@@ -30,6 +30,7 @@ PySide6 Data Store Pruner & Compressor Linux Application
 6. follow the prompts
 7. you should now have a desktop icon and a launcher script named dspx-launcher.sh
 8. run the launcher script
+9. you will also be able to find it in your applications menu
 
 ### To Uninstall
 
