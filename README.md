@@ -24,7 +24,7 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 1. go in parent directory where you want to install to
 2. do 'git clone https://github.com/WOLFBED/dspx', this will create new dir and install dspx within
-3. cd into dspx
+3. cd into dspx/
 4. do 'chmod +x install.sh && chmod +x uninstall.sh && chmod +x install-ubuntu.sh && chmod +x install-arch.sh'
 5. do './install.sh'
 6. follow the prompts
