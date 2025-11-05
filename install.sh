@@ -25,7 +25,7 @@ echo ""
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 case $DISTRO in
-    arch|manjaro|endeavouros|artix)
+    arch|manjaro|endeavouros|artix|garuda)
         echo "Using Arch Linux installer..."
         bash "$SCRIPT_DIR/install-arch.sh"
         ;;

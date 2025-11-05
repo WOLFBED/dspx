@@ -4,7 +4,7 @@ DSPX - Data Store Pruner and Compressor
 Clean up directories by removing OS residual files, finding and removing duplicate files,
 and deleting empty directories.
 
-by P.W.R. Marcoux 2025
+P.W.R. Marcoux 2025
 
 VERSION 1.0
     - CSV-based pattern matching for OS residual files
@@ -86,9 +86,18 @@ DEFAULT_SETTINGS = {
     'chunk_size': 65536,  # 64 KB
 }
 
-# Settings file path
-SETTINGS_FILE = Path('dspx_settings.json')
-PATTERNS_FILE = Path('dspx_residuals_patterns.csv')
+# # Settings file path
+# SETTINGS_FILE = Path('dspx_settings.json')
+# PATTERNS_FILE = Path('dspx_residuals_patterns.csv')
+
+from pathlib import Path
+
+# Determine the directory containing the current script
+BASE_DIR = Path(__file__).resolve().parent
+
+# Define paths relative to that directory
+SETTINGS_FILE = BASE_DIR / 'dspx_settings.json'
+PATTERNS_FILE = BASE_DIR / 'dspx_residuals_patterns.csv'
 
 
 def load_settings() -> Dict:
