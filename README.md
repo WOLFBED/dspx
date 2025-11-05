@@ -23,7 +23,11 @@ PySide6 Data Store Pruner & Compressor Linux Application
 ### Install
 
 1. go in parent directory where you want to install to
-2. do 'git clone https://github.com/WOLFBED/dspx', this will create new dir and install dspx within
+2. [![Copy Command](https://img.shields.io/badge/copy-command-green?logo=github)](https://github.com/WOLFBED/dspx)
+
+3. do ```git clone https://github.com/WOLFBED/dspx``` [![Copy Command](https://img.shields.io/badge/copy-command-green?logo=github)](https://github.com/WOLFBED/dspx)
+
+this will create new dir and install dspx within
 3. cd into dspx/
 4. do 'chmod +x install.sh && chmod +x uninstall.sh && chmod +x install-ubuntu.sh && chmod +x install-arch.sh'
 5. do './install.sh'
@@ -40,14 +44,17 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 ### Uninstall
 
-1. do './install-ubuntu.sh' or './install-arch.sh'
-1. to uninstall, do './uninstall.sh'
+1. go into dspx/ install directory
+1. do './uninstall.sh'
 2. follow the prompts
+3. u gud bra
 
 &nbsp;
 
 ## TODO List
 
+- [ ] look for ways to speed it up, it's still super slow.
+- [ ] merge tabs 2 and 3 since there's no longer the need to have them separated. (it used to make sense, but this is no longer the case.)
 - [ ] make it so patterns can be enabled or disabled.
 - [ ] add spinner when process is running, otherwise confusing.
 - [ ] Get a life. 
