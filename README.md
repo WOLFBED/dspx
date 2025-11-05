@@ -20,13 +20,14 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 ## How It Work
 
-1. Forget it, it's too complicated.
-~~1. takes list of dirs and looks for any OS residual files, recursively, and lists them -- at which point you're given the choice to delete them.~~
-~~2. gets file signatures (blake3) for all remaining files from the given dir(s)~~
-~~3. finds and displays all files with same names that also have same blake3 signature (who are identical in other words) -- at which point you're given the choice to delete the duplicates.~~
-~~4. finds and displays all other files, whether they have the same name or not, that have the same signatures -- at which point you're given the choice to delete the duplicates.~~
-~~6. deletes any empty subdirs in given dir(s)~~
-~~7. writes all operations to a log file where the program is run, showing everything that happened~~
+1. go in parent directory where you want to install to
+2. do 'git clone https://github.com/WOLFBED/dspx' or download the zip file
+3. cd into dspx
+4. do 'chmod +x install.sh'
+5. do './install.sh'
+6. follow the prompts
+7. you should now have a desktop icon and a launcher script named dspx-launcher.sh
+8. run the launcher script
 
 &nbsp;
 
