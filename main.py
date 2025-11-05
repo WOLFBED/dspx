@@ -4,8 +4,11 @@ DSPX - Data Store Pruner and Compressor
 Clean up directories by removing OS residual files, finding and removing duplicate files,
 and deleting empty directories.
 
-VERSION 1.1
+VERSION 1.2
     Add ability to specify and save OS residual file matching patterns.  Nice.
+
+VERSION 1.1
+    Add stop button to cleanly stop all processes.
 
 VERSION 1.0
     It works.
