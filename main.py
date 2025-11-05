@@ -311,6 +311,81 @@ class ScanWorker(QThread):
         return residual_files
 
 
+    # def scan_for_duplicates(self) -> Dict:
+    #     """Scan for duplicate files using hash signatures with parallel processing."""
+    #     file_hashes = {}
+    #     file_info = {}
+    #     files_to_hash = []
+    #     self.signals.log.emit(f"Starting duplicate scan using {HASH_ALGO} hashing...")
+    #     self.signals.log.emit(f"Using {self.max_workers} parallel workers")
+    #     self.signals.log.emit(f"Chunk size: {self.chunk_size} bytes ({self.chunk_size // 1024} KB)")
+    #     # First pass: collect files
+    #     for directory in self.directories:
+    #         if self._is_cancelled:
+    #             return {}
+    #         dir_path = Path(directory)
+    #         if not dir_path.exists():
+    #             self.signals.log.emit(f"Warning: Directory does not exist: {directory}")
+    #             continue
+    #         self.signals.log.emit(f"Collecting files in: {directory}")
+    #         try:
+    #             for root, _, files in os.walk(dir_path):
+    #                 if self._is_cancelled:
+    #                     return {}
+    #                 root_path = Path(root)
+    #                 for filename in files:
+    #                     file_path = root_path / filename
+    #                     # Skip OS residual files
+    #                     if match_residual_pattern(file_path, self.patterns):
+    #                         continue
+    #                     if not file_path.is_file():
+    #                         continue
+    #                     try:
+    #                         file_size = file_path.stat().st_size
+    #                         files_to_hash.append((file_path, file_size, filename))
+    #                     except (OSError, PermissionError) as e:
+    #                         self.signals.log.emit(f"Error accessing {file_path}: {str(e)}")
+    #         except Exception as e:
+    #             self.signals.log.emit(f"Error scanning {directory}: {str(e)}")
+    #     if not files_to_hash:
+    #         self.signals.log.emit("No files found to process")
+    #         return {}
+    #     # Second pass: parallel hashing
+    #     try:
+    #         file_hashes, file_info, total_scanned = asyncio.run(
+    #             self._hash_files_parallel(files_to_hash)
+    #         )
+    #     except Exception as e:
+    #         self.signals.log.emit(f"Error during parallel hashing: {str(e)}")
+    #         return {}
+    #     if self._is_cancelled:
+    #         return {}
+    #     # Find duplicates
+    #     same_name_duplicates = defaultdict(list)
+    #     all_duplicates = {}
+    #     for file_hash, file_paths in file_hashes.items():
+    #         if len(file_paths) > 1:
+    #             # Group by name
+    #             by_name = defaultdict(list)
+    #             for fpath in file_paths:
+    #                 fname = Path(fpath).name
+    #                 by_name[fname].append(fpath)
+    #             # Same name duplicates
+    #             for fname, paths in by_name.items():
+    #                 if len(paths) > 1:
+    #                     same_name_duplicates[file_hash].extend(paths)
+    #             # All duplicates
+    #             all_duplicates[file_hash] = file_paths
+    #     self.signals.log.emit(f"Scanned {total_scanned} files")
+    #     self.signals.log.emit(f"Found {len(same_name_duplicates)} groups of same-name duplicates")
+    #     self.signals.log.emit(f"Found {len(all_duplicates)} groups of all duplicates")
+    #     return {
+    #         'file_info': file_info,
+    #         'same_name_duplicates': same_name_duplicates,
+    #         'all_duplicates': all_duplicates
+    #     }
+
+
     def scan_for_duplicates(self) -> Dict:
         """Scan for duplicate files using hash signatures with parallel processing."""
         file_hashes = {}
@@ -319,6 +394,7 @@ class ScanWorker(QThread):
         self.signals.log.emit(f"Starting duplicate scan using {HASH_ALGO} hashing...")
         self.signals.log.emit(f"Using {self.max_workers} parallel workers")
         self.signals.log.emit(f"Chunk size: {self.chunk_size} bytes ({self.chunk_size // 1024} KB)")
+
         # First pass: collect files
         for directory in self.directories:
             if self._is_cancelled:
@@ -347,9 +423,11 @@ class ScanWorker(QThread):
                             self.signals.log.emit(f"Error accessing {file_path}: {str(e)}")
             except Exception as e:
                 self.signals.log.emit(f"Error scanning {directory}: {str(e)}")
+
         if not files_to_hash:
             self.signals.log.emit("No files found to process")
             return {}
+
         # Second pass: parallel hashing
         try:
             file_hashes, file_info, total_scanned = asyncio.run(
@@ -358,31 +436,22 @@ class ScanWorker(QThread):
         except Exception as e:
             self.signals.log.emit(f"Error during parallel hashing: {str(e)}")
             return {}
+
         if self._is_cancelled:
             return {}
-        # Find duplicates
-        same_name_duplicates = defaultdict(list)
+
+        # Find all duplicates (files with same hash)
         all_duplicates = {}
         for file_hash, file_paths in file_hashes.items():
             if len(file_paths) > 1:
-                # Group by name
-                by_name = defaultdict(list)
-                for fpath in file_paths:
-                    fname = Path(fpath).name
-                    by_name[fname].append(fpath)
-                # Same name duplicates
-                for fname, paths in by_name.items():
-                    if len(paths) > 1:
-                        same_name_duplicates[file_hash].extend(paths)
-                # All duplicates
                 all_duplicates[file_hash] = file_paths
+
         self.signals.log.emit(f"Scanned {total_scanned} files")
-        self.signals.log.emit(f"Found {len(same_name_duplicates)} groups of same-name duplicates")
-        self.signals.log.emit(f"Found {len(all_duplicates)} groups of all duplicates")
+        self.signals.log.emit(f"Found {len(all_duplicates)} groups of duplicate files")
+
         return {
             'file_info': file_info,
-            'same_name_duplicates': same_name_duplicates,
-            'all_duplicates': all_duplicates
+            'duplicates': all_duplicates
         }
 
 
@@ -535,6 +604,11 @@ class MainWindow(QMainWindow):
         self.settings = load_settings()
         self.patterns = load_residual_patterns()
 
+        # # Results storage
+        # self.residual_files = []
+        # self.duplicate_data = None
+        # self.empty_dirs = []
+
         # Results storage
         self.residual_files = []
         self.duplicate_data = None
@@ -604,12 +678,20 @@ class MainWindow(QMainWindow):
         dir_layout.addWidget(self.dir_list)
         dir_group.setLayout(dir_layout)
 
+        # # Tabs
+        # self.tabs = QTabWidget()
+        # self.tabs.addTab(self.create_residual_tab(), "1. OS Residual Files")
+        # self.tabs.addTab(self.create_same_name_duplicates_tab(), "2. Same-Name Duplicates")
+        # self.tabs.addTab(self.create_all_duplicates_tab(), "3. All Duplicates")
+        # self.tabs.addTab(self.create_empty_dirs_tab(), "4. Empty Directories")
+        # self.tabs.addTab(self.create_patterns_tab(), "📋 Patterns Editor")
+        # self.tabs.addTab(self.create_settings_tab(), "⚙ Settings")
+
         # Tabs
         self.tabs = QTabWidget()
         self.tabs.addTab(self.create_residual_tab(), "1. OS Residual Files")
-        self.tabs.addTab(self.create_same_name_duplicates_tab(), "2. Same-Name Duplicates")
-        self.tabs.addTab(self.create_all_duplicates_tab(), "3. All Duplicates")
-        self.tabs.addTab(self.create_empty_dirs_tab(), "4. Empty Directories")
+        self.tabs.addTab(self.create_duplicates_tab(), "2. Duplicate Files")
+        self.tabs.addTab(self.create_empty_dirs_tab(), "3. Empty Directories")
         self.tabs.addTab(self.create_patterns_tab(), "📋 Patterns Editor")
         self.tabs.addTab(self.create_settings_tab(), "⚙ Settings")
 
@@ -677,69 +759,103 @@ class MainWindow(QMainWindow):
         return widget
 
 
-    def create_same_name_duplicates_tab(self) -> QWidget:
-        """Create the same-name duplicates tab."""
+    # def create_same_name_duplicates_tab(self) -> QWidget:
+    #     """Create the same-name duplicates tab."""
+    #     widget = QWidget()
+    #     layout = QVBoxLayout()
+    #
+    #     btn_layout = QHBoxLayout()
+    #     scan_btn = QPushButton("Scan for Duplicates")
+    #     scan_btn.clicked.connect(self.scan_duplicates)
+    #     delete_btn = QPushButton("Delete Selected")
+    #     delete_btn.clicked.connect(self.delete_same_name_duplicates)
+    #     btn_layout.addWidget(scan_btn)
+    #     btn_layout.addWidget(delete_btn)
+    #     btn_layout.addStretch()
+    #
+    #     self.same_name_dup_list = QListWidget()
+    #     self.same_name_dup_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+    #
+    #     select_all_layout = QHBoxLayout()
+    #     select_all_btn = QPushButton("Select All Duplicates")
+    #     select_all_btn.clicked.connect(lambda: self.select_all_duplicates(self.same_name_dup_list))
+    #     deselect_all_btn = QPushButton("Deselect All")
+    #     deselect_all_btn.clicked.connect(lambda: self.deselect_all_items(self.same_name_dup_list))
+    #     select_all_layout.addWidget(select_all_btn)
+    #     select_all_layout.addWidget(deselect_all_btn)
+    #     select_all_layout.addStretch()
+    #
+    #     layout.addLayout(btn_layout)
+    #     layout.addWidget(QLabel("Same-name duplicate files (first kept, rest deletable):"))
+    #     layout.addWidget(self.same_name_dup_list)
+    #     layout.addLayout(select_all_layout)
+    #
+    #     widget.setLayout(layout)
+    #     return widget
+    #
+    #
+    # def create_all_duplicates_tab(self) -> QWidget:
+    #     """Create the all duplicates tab."""
+    #     widget = QWidget()
+    #     layout = QVBoxLayout()
+    #
+    #     info_label = QLabel("All duplicate files regardless of name:")
+    #     delete_btn = QPushButton("Delete Selected")
+    #     delete_btn.clicked.connect(self.delete_all_duplicates)
+    #
+    #     btn_layout = QHBoxLayout()
+    #     btn_layout.addWidget(delete_btn)
+    #     btn_layout.addStretch()
+    #
+    #     self.all_dup_list = QListWidget()
+    #     self.all_dup_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+    #
+    #     select_all_layout = QHBoxLayout()
+    #     select_all_btn = QPushButton("Select All Duplicates")
+    #     select_all_btn.clicked.connect(lambda: self.select_all_duplicates(self.all_dup_list))
+    #     deselect_all_btn = QPushButton("Deselect All")
+    #     deselect_all_btn.clicked.connect(lambda: self.deselect_all_items(self.all_dup_list))
+    #     select_all_layout.addWidget(select_all_btn)
+    #     select_all_layout.addWidget(deselect_all_btn)
+    #     select_all_layout.addStretch()
+    #
+    #     layout.addWidget(info_label)
+    #     layout.addLayout(btn_layout)
+    #     layout.addWidget(self.all_dup_list)
+    #     layout.addLayout(select_all_layout)
+    #
+    #     widget.setLayout(layout)
+    #     return widget
+
+    def create_duplicates_tab(self) -> QWidget:
+        """Create the duplicate files tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
         btn_layout = QHBoxLayout()
-        scan_btn = QPushButton("Scan for Duplicates")
+        scan_btn = QPushButton("Scan for Duplicate Files")
         scan_btn.clicked.connect(self.scan_duplicates)
         delete_btn = QPushButton("Delete Selected")
-        delete_btn.clicked.connect(self.delete_same_name_duplicates)
+        delete_btn.clicked.connect(self.delete_duplicates)
         btn_layout.addWidget(scan_btn)
         btn_layout.addWidget(delete_btn)
         btn_layout.addStretch()
 
-        self.same_name_dup_list = QListWidget()
-        self.same_name_dup_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+        self.duplicates_list = QListWidget()
+        self.duplicates_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
 
         select_all_layout = QHBoxLayout()
         select_all_btn = QPushButton("Select All Duplicates")
-        select_all_btn.clicked.connect(lambda: self.select_all_duplicates(self.same_name_dup_list))
+        select_all_btn.clicked.connect(lambda: self.select_all_duplicates(self.duplicates_list))
         deselect_all_btn = QPushButton("Deselect All")
-        deselect_all_btn.clicked.connect(lambda: self.deselect_all_items(self.same_name_dup_list))
+        deselect_all_btn.clicked.connect(lambda: self.deselect_all_items(self.duplicates_list))
         select_all_layout.addWidget(select_all_btn)
         select_all_layout.addWidget(deselect_all_btn)
         select_all_layout.addStretch()
 
         layout.addLayout(btn_layout)
-        layout.addWidget(QLabel("Same-name duplicate files (first kept, rest deletable):"))
-        layout.addWidget(self.same_name_dup_list)
-        layout.addLayout(select_all_layout)
-
-        widget.setLayout(layout)
-        return widget
-
-
-    def create_all_duplicates_tab(self) -> QWidget:
-        """Create the all duplicates tab."""
-        widget = QWidget()
-        layout = QVBoxLayout()
-
-        info_label = QLabel("All duplicate files regardless of name:")
-        delete_btn = QPushButton("Delete Selected")
-        delete_btn.clicked.connect(self.delete_all_duplicates)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.addWidget(delete_btn)
-        btn_layout.addStretch()
-
-        self.all_dup_list = QListWidget()
-        self.all_dup_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-
-        select_all_layout = QHBoxLayout()
-        select_all_btn = QPushButton("Select All Duplicates")
-        select_all_btn.clicked.connect(lambda: self.select_all_duplicates(self.all_dup_list))
-        deselect_all_btn = QPushButton("Deselect All")
-        deselect_all_btn.clicked.connect(lambda: self.deselect_all_items(self.all_dup_list))
-        select_all_layout.addWidget(select_all_btn)
-        select_all_layout.addWidget(deselect_all_btn)
-        select_all_layout.addStretch()
-
-        layout.addWidget(info_label)
-        layout.addLayout(btn_layout)
-        layout.addWidget(self.all_dup_list)
+        layout.addWidget(QLabel("Duplicate files (first occurrence kept, rest deletable):"))
+        layout.addWidget(self.duplicates_list)
         layout.addLayout(select_all_layout)
 
         widget.setLayout(layout)
@@ -1337,6 +1453,34 @@ class MainWindow(QMainWindow):
         self.deletion_worker.start()
 
 
+    # def scan_duplicates(self):
+    #     """Start scanning for duplicate files."""
+    #     if not self.directories:
+    #         QMessageBox.warning(self, "No Directories", "Please add at least one directory to scan.")
+    #         return
+    #     if self.worker and self.worker.isRunning():
+    #         QMessageBox.warning(self, "Operation in Progress", "An operation is already running.")
+    #         return
+    #
+    #     self.same_name_dup_list.clear()
+    #     self.all_dup_list.clear()
+    #     self.progress_bar.setVisible(True)
+    #     self.progress_bar.setValue(0)
+    #     self.stop_btn.setEnabled(True)
+    #
+    #     self.worker = ScanWorker(
+    #         self.directories,
+    #         "scan_duplicates",
+    #         max_workers=self.settings['max_workers'],
+    #         chunk_size=self.settings['chunk_size'],
+    #         patterns=self.patterns
+    #     )
+    #     self.worker.signals.progress.connect(self.update_progress)
+    #     self.worker.signals.finished.connect(self.on_duplicate_scan_finished)
+    #     self.worker.signals.error.connect(self.on_worker_error)
+    #     self.worker.signals.log.connect(self.log)
+    #     self.worker.start()
+
     def scan_duplicates(self):
         """Start scanning for duplicate files."""
         if not self.directories:
@@ -1346,8 +1490,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Operation in Progress", "An operation is already running.")
             return
 
-        self.same_name_dup_list.clear()
-        self.all_dup_list.clear()
+        self.duplicates_list.clear()
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.stop_btn.setEnabled(True)
@@ -1366,6 +1509,38 @@ class MainWindow(QMainWindow):
         self.worker.start()
 
 
+    # def on_duplicate_scan_finished(self, result):
+    #     """Handle duplicate scan completion."""
+    #     self.progress_bar.setVisible(False)
+    #     self.stop_btn.setEnabled(False)
+    #     if result is None or not result:
+    #         self.status_label.setText("Scan cancelled or no duplicates found")
+    #         return
+    #     self.duplicate_data = result
+    #
+    #     # Populate same-name duplicates
+    #     same_name_dups = result.get('same_name_duplicates', {})
+    #     for file_hash, file_paths in same_name_dups.items():
+    #         if len(file_paths) > 1:
+    #             self.same_name_dup_list.addItem(f"--- Group (hash: {file_hash[:16]}...) ---")
+    #             for i, fpath in enumerate(file_paths):
+    #                 prefix = "[KEEP]" if i == 0 else "[DELETE]"
+    #                 self.same_name_dup_list.addItem(f"  {prefix} {fpath}")
+    #
+    #     # Populate all duplicates
+    #     all_dups = result.get('all_duplicates', {})
+    #     for file_hash, file_paths in all_dups.items():
+    #         if len(file_paths) > 1:
+    #             self.all_dup_list.addItem(f"--- Group (hash: {file_hash[:16]}...) ---")
+    #             for i, fpath in enumerate(file_paths):
+    #                 prefix = "[KEEP]" if i == 0 else "[DELETE]"
+    #                 self.all_dup_list.addItem(f"  {prefix} {fpath}")
+    #     self.status_label.setText(
+    #         f"Found {len(same_name_dups)} same-name duplicate groups, "
+    #         f"{len(all_dups)} total duplicate groups"
+    #     )
+    #     self.log("Duplicate scan complete")
+
     def on_duplicate_scan_finished(self, result):
         """Handle duplicate scan completion."""
         self.progress_bar.setVisible(False)
@@ -1373,38 +1548,103 @@ class MainWindow(QMainWindow):
         if result is None or not result:
             self.status_label.setText("Scan cancelled or no duplicates found")
             return
+
         self.duplicate_data = result
+        duplicates = result.get('duplicates', {})
 
-        # Populate same-name duplicates
-        same_name_dups = result.get('same_name_duplicates', {})
-        for file_hash, file_paths in same_name_dups.items():
+        # Populate duplicate files list
+        for file_hash, file_paths in duplicates.items():
             if len(file_paths) > 1:
-                self.same_name_dup_list.addItem(f"--- Group (hash: {file_hash[:16]}...) ---")
+                self.duplicates_list.addItem(f"--- Group (hash: {file_hash[:16]}...) ---")
                 for i, fpath in enumerate(file_paths):
                     prefix = "[KEEP]" if i == 0 else "[DELETE]"
-                    self.same_name_dup_list.addItem(f"  {prefix} {fpath}")
+                    self.duplicates_list.addItem(f"  {prefix} {fpath}")
 
-        # Populate all duplicates
-        all_dups = result.get('all_duplicates', {})
-        for file_hash, file_paths in all_dups.items():
-            if len(file_paths) > 1:
-                self.all_dup_list.addItem(f"--- Group (hash: {file_hash[:16]}...) ---")
-                for i, fpath in enumerate(file_paths):
-                    prefix = "[KEEP]" if i == 0 else "[DELETE]"
-                    self.all_dup_list.addItem(f"  {prefix} {fpath}")
+        total_duplicates = sum(len(paths) - 1 for paths in duplicates.values())
         self.status_label.setText(
-            f"Found {len(same_name_dups)} same-name duplicate groups, "
-            f"{len(all_dups)} total duplicate groups"
+            f"Found {len(duplicates)} duplicate groups ({total_duplicates} duplicate files)"
         )
-        self.log("Duplicate scan complete")
 
 
-    def delete_same_name_duplicates(self):
-        """Delete selected same-name duplicates."""
-        selected_items = self.same_name_dup_list.selectedItems()
+    # def delete_same_name_duplicates(self):
+    #     """Delete selected same-name duplicates."""
+    #     selected_items = self.same_name_dup_list.selectedItems()
+    #     if not selected_items:
+    #         QMessageBox.warning(self, "No Selection", "Please select files to delete.")
+    #         return
+    #     # Extract file paths (skip group headers)
+    #     items_to_delete = []
+    #     for item in selected_items:
+    #         text = item.text().strip()
+    #         if not text.startswith('---'):
+    #             # Remove prefix
+    #             if text.startswith('['):
+    #                 text = text.split('] ', 1)[1] if '] ' in text else text
+    #             items_to_delete.append(text.strip())
+    #     if not items_to_delete:
+    #         QMessageBox.warning(self, "No Files", "No valid files selected.")
+    #         return
+    #     reply = QMessageBox.question(
+    #         self, "Confirm Deletion",
+    #         f"Delete {len(items_to_delete)} selected duplicate file(s)?",
+    #         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    #     )
+    #     if reply != QMessageBox.StandardButton.Yes:
+    #         return
+    #
+    #     self.progress_bar.setVisible(True)
+    #     self.progress_bar.setValue(0)
+    #     self.stop_btn.setEnabled(True)
+    #
+    #     self.deletion_worker = DeletionWorker(items_to_delete)
+    #     self.deletion_worker.signals.progress.connect(self.update_progress)
+    #     self.deletion_worker.signals.finished.connect(self.on_deletion_finished)
+    #     self.deletion_worker.signals.error.connect(self.on_worker_error)
+    #     self.deletion_worker.signals.log.connect(self.log)
+    #     self.deletion_worker.start()
+    #
+    #
+    # def delete_all_duplicates(self):
+    #     """Delete selected all duplicates."""
+    #     selected_items = self.all_dup_list.selectedItems()
+    #     if not selected_items:
+    #         QMessageBox.warning(self, "No Selection", "Please select files to delete.")
+    #         return
+    #     items_to_delete = []
+    #     for item in selected_items:
+    #         text = item.text().strip()
+    #         if not text.startswith('---'):
+    #             items_to_delete.append(text.strip())
+    #     if not items_to_delete:
+    #         QMessageBox.warning(self, "No Files", "No valid files selected.")
+    #         return
+    #     reply = QMessageBox.question(
+    #         self, "Confirm Deletion",
+    #         f"Delete {len(items_to_delete)} selected duplicate file(s)?",
+    #         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    #     )
+    #     if reply != QMessageBox.StandardButton.Yes:
+    #         return
+    #
+    #     self.progress_bar.setVisible(True)
+    #     self.progress_bar.setValue(0)
+    #     self.stop_btn.setEnabled(True)
+    #
+    #     self.deletion_worker = DeletionWorker(items_to_delete)
+    #     self.deletion_worker.signals.progress.connect(self.update_progress)
+    #     self.deletion_worker.signals.finished.connect(self.on_deletion_finished)
+    #     self.deletion_worker.signals.error.connect(self.on_worker_error)
+    #     self.deletion_worker.signals.log.connect(self.log)
+    #     self.deletion_worker.start()
+
+
+    def delete_duplicates(self):
+        """Delete selected duplicate files."""
+        selected_items = self.duplicates_list.selectedItems()
         if not selected_items:
             QMessageBox.warning(self, "No Selection", "Please select files to delete.")
             return
+
         # Extract file paths (skip group headers)
         items_to_delete = []
         for item in selected_items:
@@ -1414,9 +1654,11 @@ class MainWindow(QMainWindow):
                 if text.startswith('['):
                     text = text.split('] ', 1)[1] if '] ' in text else text
                 items_to_delete.append(text.strip())
+
         if not items_to_delete:
             QMessageBox.warning(self, "No Files", "No valid files selected.")
             return
+
         reply = QMessageBox.question(
             self, "Confirm Deletion",
             f"Delete {len(items_to_delete)} selected duplicate file(s)?",
@@ -1434,42 +1676,6 @@ class MainWindow(QMainWindow):
         self.deletion_worker.signals.finished.connect(self.on_deletion_finished)
         self.deletion_worker.signals.error.connect(self.on_worker_error)
         self.deletion_worker.signals.log.connect(self.log)
-        self.deletion_worker.start()
-
-
-    def delete_all_duplicates(self):
-        """Delete selected all duplicates."""
-        selected_items = self.all_dup_list.selectedItems()
-        if not selected_items:
-            QMessageBox.warning(self, "No Selection", "Please select files to delete.")
-            return
-        items_to_delete = []
-        for item in selected_items:
-            text = item.text().strip()
-            if not text.startswith('---'):
-                items_to_delete.append(text.strip())
-        if not items_to_delete:
-            QMessageBox.warning(self, "No Files", "No valid files selected.")
-            return
-        reply = QMessageBox.question(
-            self, "Confirm Deletion",
-            f"Delete {len(items_to_delete)} selected duplicate file(s)?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.stop_btn.setEnabled(True)
-
-        self.deletion_worker = DeletionWorker(items_to_delete)
-        self.deletion_worker.signals.progress.connect(self.update_progress)
-        self.deletion_worker.signals.finished.connect(self.on_deletion_finished)
-        self.deletion_worker.signals.error.connect(self.on_worker_error)
-        self.deletion_worker.signals.log.connect(self.log)
-        self.deletion_worker.start()
-
 
     def scan_empty_dirs(self):
         """Start scanning for empty directories."""
