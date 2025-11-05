@@ -66,6 +66,19 @@ git pull
 &nbsp;
 
 ## Future Features
+- NUMA-aware asyncio + io_uring reference implementation :: use numactl or libnuma to bind memory to a NUMA node
+- adjustable MAX_INFLIGHT to control how many simultaneous outstanding reads we allow
+  grouping by file size to avoid comparing hashes across different sizes
+- use SQPOLL (IORING_SETUP_SQPOLL) to have submissions without syscalls
+- use O_DIRECT to avoid page cache and gives more deterministic behavior
+- use io_uring binding to expose a way to read into preallocated bytearray/mmap buffers and reuse those buffers, to eliminate extra allocations and GC pressure
+- spawn one process per NUMA node - this avoids Python GIL contention and allows memory + CPU affinity to be set per process
+- add settings: best for ssd, best for hdd, best fpr both, best for large RAM, best for more/less CPU cores --- and manual specifications
+- for collecting results use an on-disk key-value store (LMDB) or append-only files and then an external merge step
+- use O_DIRECT + aligned reads + preallocated posix_memalign buffers for minimal kernel copies
+- use IORING_SETUP_SQPOLL with an appropriately tuned SQ poll thread to obliterate syscall overhead on high QD
+- for multiple physical spindles, schedule disk access per-device (group files by device) to avoid head thrash across devices
+- replace python-level process spawning with a lightweight C supervisor that uses liburing directly and hands hashing work to worker threads in a tight loop (lowest overhead)
 - option to compress all:
   - audio files to opus
   - image files to avif or jxl
@@ -73,6 +86,7 @@ git pull
 - analyze task throughput and approximate a completion time, i.e. "should be done in x time"
 - ---OPTIONAL--- compares files that are extremely similar but not identical, and displays them -- at which point you're given the choice to delete them, one at a time.  This would be especially useful for images.
 - ~~use argparse instead of diarrhea~~
+*(see joplin doc for more details)
 
 &nbsp;
 
