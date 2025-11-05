@@ -53,3 +53,9 @@ data store pruner and compressor
 - modules:
   - rich
   - ???
+
+&nbsp;
+
+## Nota Bene
+- This has been, in large part, "vibe" coded.  Dear Lord.  I can write programs, I just don't like to.  ..But hey!  It works well!
+
