@@ -56,6 +56,7 @@ git pull
 
 ## TODO List
 
+- [ ] make settings/configs saved to ~/.config/dspx, otherwise can't easily update app via 'git pull'
 - [ ] decouple the UI from the processes, to ensure the GUI doesn't freeze
 - [ ] look for ways to speed it up, it's still super slow.
 - [x] merge tabs 2 and 3 since there's no longer the need to have them separated. (it used to make sense, but this is no longer the case.) -- nov 5 2025
