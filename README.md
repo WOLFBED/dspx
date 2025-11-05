@@ -86,5 +86,5 @@ git pull
 &nbsp;
 
 ## Nota Bene
-- This has been, in large part, "vibe" coded.  Dear Lord.  I can write programs, I just don't like to.  ..But hey!  It works!
+- This has been, in several parts, "vibe" coded.  Dear Lord.  I can write programs, I just don't like to.  ..But hey!  It works!
 
