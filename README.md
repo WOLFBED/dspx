@@ -20,7 +20,7 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 ## How It Work ~ Install/Uninstall
 
-### To install
+### Install
 
 1. go in parent directory where you want to install to
 2. do 'git clone https://github.com/WOLFBED/dspx', this will create new dir and install dspx within
@@ -32,7 +32,13 @@ PySide6 Data Store Pruner & Compressor Linux Application
 8. run the launcher script
 9. you will also be able to find it in your applications menu
 
-### To Uninstall
+### Update to latest version
+
+1. go in dspx/ directory
+2. do 'git pull'
+3. should be good
+
+### Uninstall
 
 1. do './install-ubuntu.sh' or './install-arch.sh'
 1. to uninstall, do './uninstall.sh'
