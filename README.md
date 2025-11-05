@@ -17,8 +17,8 @@ data store pruner and compressor
 ## How It Work
 
 1. takes list of dirs and looks for any OS residual files, recursively, and lists them -- at which point you're given the choice to delete them.
-2. gets file signatures for all remaining files
-3. finds and displays all files with same names that also have same signature (who are identical in other words) -- at which point you're given the choice to delete the duplicates.
+2. gets file signatures (blake3) for all remaining files from the given dir(s)
+3. finds and displays all files with same names that also have same blake3 signature (who are identical in other words) -- at which point you're given the choice to delete the duplicates.
 4. finds and displays all other files, whether they have the same name or not, that have the same signatures -- at which point you're given the choice to delete the duplicates.
 5. ---OPTIONAL--- compares files that are extremely similar but not identical, and displays them -- at which point you're given the choice to delete them, one at a time.
 6. deletes any empty subdirs in given dir(s)
