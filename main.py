@@ -6,6 +6,13 @@ and deleting empty directories.
 
 P.W.R. Marcoux 2025 :: aka WOLFBED
 
+
+VERSION 1.2
+    - merge tabs 2 and 3 into one, does what tab 3 did
+
+VERSION 1.1
+    - add ability to enable/disable residual patterns
+
 VERSION 1.0
     - CSV-based pattern matching for OS residual files
     - Pattern validation and testing
