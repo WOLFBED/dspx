@@ -2,6 +2,8 @@
 # DSPX
 PySide6 Data Store Pruner & Compressor Linux Application
 
+![#f03c15] `!!! DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : MAY DESTROY YOUR PROPERTY !!!`
+
 &nbsp;
 
 ## Features & Stuff
@@ -62,6 +64,22 @@ git pull
 - [x] make it so patterns can be enabled or disabled. -- nov 5 2025
 - [ ] add spinner when process is running, otherwise confusing.
 - [ ] Get a life. 
+
+&nbsp;
+
+## Development Journal
+
+--- 06/11/2025 13:50 ---
+<p>I will restructure the program around 1. sessions; 2. de-coupling the majority of the 'processing' from the GUI code.</p>
+<p>Sessions :: when the app is launched it starts a new dir under ~/.cache/dspx/sessions/ where it would use a fast database to write task lists, e.g.
+list of files to get hashes for, their individual sizes, their storage device locations (which storage device they're on), etc. -- so that when the hashing task starts, it ca be done in batches and not take-up all the RAM and freeze everything up.  A copy of the settings and parameters used for the task. 
+</p>
+<p>this database should be fast -- maybe tigerbeetle, if appropriate ? </p>
+<p>each step must happen in order that</p> 
+<p>should make sure that, after measuring the total size of files to operate on, there will be enough space to run tasks on in ~/.cache, otherwise ask to reduce scope of task, or use another location for session storage.  default would be ~/.cache</p>
+<p>settings and patterns should be verified by user before processing.  patterns should be audited before deploying</p>
+<p></p>
+<p></p>
 
 &nbsp;
 
