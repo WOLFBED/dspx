@@ -2,9 +2,9 @@
 # DSPX
 PySide6 Data Store Pruner & Compressor Linux Application
 
-![#f03c15] `!!! DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : MAY DESTROY YOUR PROPERTY !!!`
+### <span style='color: yellow;'>!!!</span> <span style='color: red;'>DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : MAY DESTROY YOUR PROPERTY</span> <span style='color: yellow;'>!!!</span>
 
-&nbsp;
+***
 
 ## Features & Stuff
 
@@ -70,17 +70,24 @@ git pull
 
 ## Development Journal
 
---- 06/11/2025 13:50 ---
-<p>I will restructure the program around 1. sessions; 2. de-coupling the majority of the 'processing' from the GUI code.</p>
+<span style='color: green;'>--- <b>06/11/2025 13:50</b> ---</span>
+<p>I will restructure the program around: 1. sessions; 2. de-coupling the 'processing' from the GUI code, to avoid freezing.</p>
 <p>Sessions :: when the app is launched it starts a new dir under ~/.cache/dspx/sessions/ where it would use a fast database to write task lists, e.g.
-list of files to get hashes for, their individual sizes, their storage device locations (which storage device they're on), etc. -- so that when the hashing task starts, it ca be done in batches and not take-up all the RAM and freeze everything up.  A copy of the settings and parameters used for the task. 
-</p>
-<p>this database should be fast -- maybe tigerbeetle, if appropriate ? </p>
-<p>each step must happen in order that</p> 
-<p>should make sure that, after measuring the total size of files to operate on, there will be enough space to run tasks on in ~/.cache, otherwise ask to reduce scope of task, or use another location for session storage.  default would be ~/.cache</p>
-<p>settings and patterns should be verified by user before processing.  patterns should be audited before deploying</p>
-<p></p>
-<p></p>
+list of files to get hashes for, their individual sizes, their storage device locations (which storage device they're on), etc. -- so that when the hashing task starts, it ca be done in batches and not take-up all the RAM and freeze everything up.  A copy of the settings and parameters used for the task.</p>
+<p>This database should be fast -- maybe tigerbeetle, if appropriate ? </p>
+<p>Settings and patterns should be verified by user before processing.  patterns should be audited before deploying.  there should be an examination of patterns TO MAKE REALLY SURE that the user won't accidentally delete their whole system -- maybe some pattern presets, like "SUPER SAFE" and "YOUR WISH IS MY COMMAND" or something</p>
+<p>The first step in processing should just be counting files and number of storage devices -- so that there can be a superficial assessment of the task at hand, e.g. if there's 25 million files - this is likely a large job, are you sure? -- if so ...<br>
+should make sure that, after measuring the total size of files to operate on, there will be enough space to run tasks on in ~/.cache, otherwise ask to reduce scope of task, or use another location for session storage.  default would be ~/.cache</p>
+<p>After that, there should be a read/write throughput test on the devices in the task -- to have a vague idea/calculation for how long the task might take to complete, on tiny (tons), small (tons), medium (many), large (many), and xxx-large (few) files. </p>
+<p>Research if fetching files and sizes at once may be too slow and should be separated into two tasks, one for just fetching the files, counting them, and the two, fetching their sizes -- maybe this is negligible and should be done at once, but for an extremely large number of extremely large files, maybe not.</p>
+<p>Fetching file paths should be done in batches of size appropriate for speed of devices</p>
+<p>File hashing :: before processing, should have a test made for tiny (tons), small (tons), medium (many), large (many), and xxx-large (few) files -- per device(s) to have/caclculate a vague idea how many files in batch to process at a time.</p></p>
+<p>Automatically determined defaults for CPU and RAM usage, based on enumerated hardware -- with slider for increasing or decreasing percentage of CPUs and RAM to use -- Warn if setting above 80% that this is a bad idea</p>
+<p>If session dir is located on same device as task to be performed, take this into consideration for potential performance bottleneck</p>
+<p>Ensure that even the selection of which files to keep/delete is done in batches (because this will also freeze-up the app if there are loads) AND also when deleting files is done in batches too -- this will also be slow -- and none of these high number of things should ever be in RAM above specified capacity percentage</p>
+<p>---OPTIONAL BUT DARN NICE--- when selecting files to keep/delete, ability to select/reject duplicates from specific devices, i.e. if the files you want to keep are on drive sda and duplicates may be on both drives sda and sdb -- rejecting any from sdb -- in many contexts, this would be extremely useful</p>
+<p>So in the session db, for each file to work on, its device should be taken into account/recorded in db</p>
+<p>Phew!</p>
 
 &nbsp;
 
