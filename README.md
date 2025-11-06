@@ -4,6 +4,10 @@ PySide6 Data Store Pruner & Compressor Linux Application
 
 ### <span style='color: yellow;'>!!!</span> <span style='color: red;'>DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : MAY DESTROY YOUR PROPERTY</span> <span style='color: yellow;'>!!!</span>
 
+
+
+
+
 ***
 
 ## Features & Stuff
@@ -130,5 +134,6 @@ should make sure that, after measuring the total size of files to operate on, th
 &nbsp;
 
 ## Nota Bene
-- This has been, in several parts, "vibe" coded.  Dear Lord.  I can write programs, I just don't like to.  ..But hey!  It works!
+- ~~This has been, in several parts, "vibe" coded.  Dear Lord.  I can write programs, I just don't like to.  ..But hey!  It works!~~
+- Fun!  
 
