@@ -2,7 +2,7 @@
 # DSPX
 PySide6 Data Store Pruner & Compressor Linux Application
 
-### <span style='color: yellow;'>!!!</span> <span style='color: red;'>DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : MAY DESTROY YOUR PROPERTY</span> <span style='color: yellow;'>!!!</span>
+### <span style='color: yellow;'>!!!</span> <span style='color: red;'>DO NOT USE THIS SOFTWARE UNDER ANY CIRCUMSTANCES : IT MAY DESTROY YOUR PROPERTY</span> <span style='color: yellow;'>!!!</span>
 
 
 
