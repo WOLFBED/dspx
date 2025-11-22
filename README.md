@@ -74,6 +74,32 @@ git pull
 
 ## Development Journal
 
+<span style='color: green;'>--- <b>22/11/2025 12:55</b> ---</span>
+
+<p>When launched, after the input dirs are entered, the user clicks on the Assess Task button, this creates a database file for the session. The device/filesystem per input dir is determined.  The dirs get grouped per their device.  This goes in the input_dir_device table, which looks thus:<br>
+ID | input_dir | device_type | filesystem_type | device_path/location<br>Also, the total number of files per drive is counted very quickly -- and this is displayed in a console-like box in the app.  This number is to be used for progress reporting in the app.</p>
+
+<p>Once this is done, dspx creates the files table, that looks thus:<br>
+ID | input_dir_device_ID | parent_path | file basename (with extension) | size | hash | created date | last modified date<br><br>
+where it ingests the file paths, the device ID on which they reside and the sizes, etc. -- in chunks, and puts it all in a fast database. Initially, or for the pattern matching process, the files hashes column remains empty. After this, it can tally-up the file sizes/number and estimate the size of the job.  Now the pattern matching happens -- this processes happens in batches appropriate to the system's specs -- although these can be manually adjusted in the settings. The progress bar shows how many files have been scanned for mathing patterns against the total number of files in the task.</p>
+
+<p>The pattern matching finds, lists, and selects all files to be deleted -- but before deleting, you are given the option to manually keep some files if desired, from the list of all matches.  The deletion task uses optimized techniques, automatically selected appropriately for the type of drive and filesystem.</p>
+
+<p>The deduplication gives the option to only select duplicate files if not on a specific device, i.e. if two duplicate files are found, each on a different drive -- you can make it automically keep only the one's found on the first drive, and omit any duplicates found on the other drives.<br>
+The options for deduplication should be thus:<br>
+- keep all duplicates<br>
+- keep duplicates from a specified device, but reject duplicates on different devices<br>
+- keep the first duplicate found in a group of duplicates, i.e. if three duplicates are found, keep the first one<br>
+- keep duplicates on the same device<br>
+- keep duplicates on different devices<br>
+- manually select duplicates to keep and reject<br>
+The duplicate deletion task uses optimized techniques, automatically selected appropriately for the type of drive and filesystem.</p>
+
+<p>The empty subdir deletion task uses optimized techniques, automatically selected appropriately for the type of drive and filesystem.  </p>
+
+&nbsp;
+&nbsp;
+
 <span style='color: green;'>--- <b>21/11/2025 22:25</b> ---</span>
 <p>Breaking it all down...</p>
 <p>I'm starting with the given dirs as input -- these are grouped by block device so that optimizations per-device can be used.  Each device is identified as HDD or SSD and filesystem --where there are some specializations for BTRFS and ZFS---.  First it's device type, HDD or SSD that is identified, because it needs to know this first, then depending on filesystem, there may be some tweaks available.  So when DSPX knows how to deal with the devices, it will count the number of files and time this process with a files-per-seconds tracking and size of total amount of data to deal with -- this will be used to assess how big the task will be.  Based on this, it will use either In-memory querying for smaller amount, query streaming comparison with TigerBeetle, or use random access lookup with SQLite.</p>
