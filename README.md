@@ -1,4 +1,4 @@
-![img/dspx_Screenshot_shaved](img/dspx_Screenshot_shaved.avif "screnshoot")
+![data/images/dspx_Screenshot_shaved](data/images/dspx_Screenshot_shaved.avif "screnshoot")
 # DSPX
 PySide6 Data Store Pruner & Compressor Linux Application
 
