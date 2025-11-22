@@ -27,7 +27,7 @@ PySide6 Data Store Pruner & Compressor Linux Application
 ## How to Install / Update / Uninstall
 
 ### Install
-
+  
 1. in your terminal, go in parent directory where you want to install dspx
 2. paste the below snippet, press enter, and follow the prompts -> it will create new dspx dir and install it within:
 ```bash
