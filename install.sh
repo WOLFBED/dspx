@@ -1,50 +1,35 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# this is for arch-based linuxes. tested with success on :: garuda, manjaro, cachyos, archcraft, endeavoros, rebornos.
+# success is not expected for all other distros.
+set -euo pipefail
 
-# DSPX Universal Installation Script
-# Auto-detects Linux distribution and runs appropriate installer
+installer_dir="dspx"
 
-set -e
+# --- Prepare workspace ---
+# (Unecessary, github page command does this.)
+# cd "$HOME/Desktop/"
+# mkdir -p $installer_dir
+# installer_dir = "$HOME/Desktop/$installer_dir"
+# cd $installer_dir
 
-echo "=========================================="
-echo "DSPX Universal Installer"
-echo "=========================================="
-echo ""
+# Path to the TOML file
+TOML_FILE="app_config.toml"
 
-# Detect distribution
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    DISTRO=$ID
-else
-    echo "Cannot detect Linux distribution"
-    exit 1
+
+echo "[+] Installing dependencies…"
+sudo pacman -S --noconfirm \
+    git curl unzip python python-pip python-virtualenv
+
+# --- Run installer (auto-yes recommended to skip prompts) ---
+echo "[+] Running Zyng installer…"
+python zyngInstaller.py --config app_config.toml --skip-fonts
+
+echo "[*] dspx installer finished."
+
+
+# just frigging remove it
+if [[ -d "$HOME/Desktop/$installer_dir" ]]; then
+    echo "Removing temporary directory"
+    rm -rf "$HOME/Desktop/$installer_dir"
+    echo "[*] Cleanup complete."
 fi
-
-echo "Detected distribution: $DISTRO ($NAME)"
-echo ""
-
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-case $DISTRO in
-    arch|manjaro|endeavouros|artix|garuda)
-        echo "Using Arch Linux installer..."
-        bash "$SCRIPT_DIR/install-arch.sh"
-        ;;
-    ubuntu|debian|linuxmint|pop|elementary|zorin|mx|tuxedo)
-        echo "Using Ubuntu/Debian installer..."
-        bash "$SCRIPT_DIR/install-ubuntu.sh"
-        ;;
-    fedora|rhel|centos|rocky|almalinux)
-        echo "Fedora/RHEL family detected."
-        echo "Please use: pip3 install --user -r requirements.txt"
-        echo "Then manually create desktop shortcut or run: python3 main.py"
-        exit 1
-        ;;
-    *)
-        echo "Unsupported distribution: $DISTRO"
-        echo ""
-        echo "You can manually install by running:"
-        echo "  pip3 install --user -r requirements.txt"
-        echo "  python3 main.py"
-        exit 1
-        ;;
-esac

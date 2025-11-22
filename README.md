@@ -31,9 +31,9 @@ PySide6 Data Store Pruner & Compressor Linux Application
 1. in your terminal, go in parent directory where you want to install dspx
 2. paste the below snippet, press enter, and follow the prompts -> it will create new dspx dir and install it within:
 ```bash
-git clone https://github.com/WOLFBED/dspx && \
-cd dspx/ && \
-chmod +x install.sh && chmod +x uninstall.sh && chmod +x install-ubuntu.sh && chmod +x install-arch.sh && \
+cd "$HOME/Desktop/" && \
+git clone https://github.com/WOLFBED/dspx && cd dspx/ && \
+chmod +x install.sh zyngInstaller.py && \
 ./install.sh
 ```
 3. you should now have a desktop icon and a launcher script named dspx-launcher.sh
@@ -73,6 +73,15 @@ git pull
 &nbsp;
 
 ## Development Journal
+
+<span style='color: green;'>--- <b>21/11/2025 22:25</b> ---</span>
+<p>Breaking it all down...</p>
+<p>I'm starting with the given dirs as input -- these are grouped by block device so that optimizations per-device can be used.  Each device is identified as HDD or SSD and filesystem --where there are some specializations for BTRFS and ZFS---.  First it's device type, HDD or SSD that is identified, because it needs to know this first, then depending on filesystem, there may be some tweaks available.  So when DSPX knows how to deal with the devices, it will count the number of files and time this process with a files-per-seconds tracking and size of total amount of data to deal with -- this will be used to assess how big the task will be.  Based on this, it will use either In-memory querying for smaller amount, query streaming comparison with TigerBeetle, or use random access lookup with SQLite.</p>
+<p>Need to finish the plan before writing app.  To be continued...</p>
+
+
+&nbsp;
+&nbsp;
 
 <span style='color: green;'>--- <b>06/11/2025 13:50</b> ---</span>
 <p>I will restructure the program around: 1. sessions; 2. de-coupling the 'processing' from the GUI code, to avoid freezing.</p>

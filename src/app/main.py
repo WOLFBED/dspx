@@ -4,7 +4,7 @@ DSPX - Data Store Pruner and Compressor
 Clean up directories by removing OS residual files, finding and removing duplicate files,
 and deleting empty directories.
 
-P.W.R. Marcoux 2025 :: aka WOLFBED
+P.W.R. Marcoux 2025
 
 
 VERSION 1.2
@@ -36,6 +36,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 
+from config.settings import SettingsManager  # Import SettingsManager
 from PySide6.QtCore import QThread, Signal, QObject
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (

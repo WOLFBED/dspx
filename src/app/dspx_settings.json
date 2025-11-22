@@ -1,0 +1,4 @@
+{
+  "max_workers": 7,
+  "chunk_size": 65536
+}
